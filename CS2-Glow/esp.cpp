@@ -13,14 +13,9 @@
 
 namespace offsets
 {
-    ptrdiff_t p_entity_list = 0; // Initialize with the correct value after fetching
-    ptrdiff_t m_h_player_pawn = 0; // Initialize with the correct value after fetching
-    ptrdiff_t m_fl_detected_by_enemy_sensor_time = 0; // Initialize with the correct value after fetching
-    /*std::string formatHexValue(ptrdiff_t hexValue) {
-        std::stringstream stream;
-        stream << "0x" << std::uppercase << std::hex << hexValue << std::nouppercase << std::dec;
-        return stream.str();
-    }*/
+    ptrdiff_t p_entity_list = 0;
+    ptrdiff_t m_h_player_pawn = 0;
+    ptrdiff_t m_fl_detected_by_enemy_sensor_time = 0;
 }
 
 #pragma comment(lib, "wininet.lib")
