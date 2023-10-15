@@ -1,0 +1,28 @@
+name: Compile esp.cpp for Windows
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install g++ for Windows cross-compilation
+      run: sudo apt-get update && sudo apt-get install -y g++-mingw-w64
+
+    - name: Compile esp.cpp for Windows
+      run: |
+        g++ -o esp.exe CS2-Glow/esp.cpp
+        # You can add additional compilation flags and options if needed
+      working-directory: ${{ github.workspace }}
+
+    - name: Upload Windows binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: esp-windows
+        path: esp.exe
