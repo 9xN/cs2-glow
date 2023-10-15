@@ -6,7 +6,7 @@
 
 namespace offsets
 {
-    const ptrdiff_t p_entity_list = 0x178DC58;
+    const ptrdiff_t p_entity_list = 0x178FC88;
     const ptrdiff_t m_h_player_pawn = 0x7BC;
     const ptrdiff_t m_fl_detected_by_enemy_sensor_time = 0x13C8;
 }
