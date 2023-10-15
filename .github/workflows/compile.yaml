@@ -17,7 +17,7 @@ jobs:
         run: |
           # Set environment variables for MSVC
           echo 'Setting up MSVC environment...'
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\Tools\VsDevCmd.bat"
+          cmd /Q /C "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\Tools\VsDevCmd.bat"
 
       - name: Build esp.cpp
         run: |
