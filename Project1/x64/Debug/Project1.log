@@ -1,0 +1,5 @@
+﻿  Source.cpp
+C:\Users\gnp\source\repos\cs2-glow\Project1\Source.cpp(139,16): warning C4477: 'printf' : format string '%p' requires an argument of type 'void *', but variadic argument 1 has type 'const ptrdiff_t'
+C:\Users\gnp\source\repos\cs2-glow\Project1\Source.cpp(140,16): warning C4477: 'printf' : format string '%p' requires an argument of type 'void *', but variadic argument 1 has type 'const ptrdiff_t'
+C:\Users\gnp\source\repos\cs2-glow\Project1\Source.cpp(141,16): warning C4477: 'printf' : format string '%p' requires an argument of type 'void *', but variadic argument 1 has type 'const ptrdiff_t'
+  Project1.vcxproj -> C:\Users\gnp\source\repos\cs2-glow\Project1\x64\Debug\Project1.exe
