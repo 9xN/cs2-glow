@@ -15,18 +15,11 @@ jobs:
 
       - name: Set up MSVC
         run: |
-          # Download and install Visual Studio Build Tools
-          Invoke-WebRequest -Uri https://aka.ms/vs/16/release/vs_buildtools.exe -OutFile vs_buildtools.exe
-          .\vs_buildtools.exe --quiet --wait --norestart --nocache `
-            --installPath "C:\BuildTools" `
-            --add Microsoft.VisualStudio.Workload.MSBuildTools `
-            --add Microsoft.VisualStudio.Workload.VCTools `
-            --add Microsoft.Component.MSBuild `
-            --add Microsoft.VisualStudio.Component.VC.14.29 `
-            --add Microsoft.VisualStudio.Component.Windows10SDK.19041
+          # Set environment variables for MSVC
+          echo 'Setting up MSVC environment...'
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\Tools\VsDevCmd.bat"
 
       - name: Build esp.cpp
         run: |
           cd CS2-Glow
-          C:\BuildTools\Common7\Tools\VsDevCmd.bat
           cl /EHsc esp.cpp
