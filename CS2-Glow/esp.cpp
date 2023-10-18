@@ -13,10 +13,15 @@
 
 namespace offsets
 {
-    ptrdiff_t p_entity_list = 0;
+    ptrdiff_t p_entity_list = 0; 
     ptrdiff_t m_h_player_pawn = 0;
     ptrdiff_t m_fl_detected_by_enemy_sensor_time = 0;
 }
+
+struct JsonData {
+    std::string key;
+    long long value;
+};
 
 #pragma comment(lib, "wininet.lib")
 
@@ -27,11 +32,13 @@ const char* COLOR_BLUE = "\033[34m";
 const char* COLOR_RESET = "\033[0m";
 
 std::string findValueByKey(const std::string& json, const std::string& key) {
+    std::regex keyRegex("\"" + key + "\":\\s*\\{\\s*\"value\":\\s*(\\d+)");
     std::smatch match;
-    std::regex keyRegex("\"" + key + "\":\\s*(\\d+)");
+
     if (std::regex_search(json, match, keyRegex)) {
         return match[1].str();
     }
+
     return "";
 }
 
@@ -59,10 +66,7 @@ std::string fetchValueFromJSON(const std::wstring& url, const std::string& key) 
 
     InternetCloseHandle(hConnect);
     InternetCloseHandle(hInternet);
-
     std::string jsonData = jsonStream.str();
-
-    // Parse the JSON content
     size_t found = jsonData.find("{");
     if (found != std::string::npos) {
         jsonData = jsonData.substr(found);
@@ -74,7 +78,6 @@ std::string fetchValueFromJSON(const std::wstring& url, const std::string& key) 
         // Find the value for the specified key
         return findValueByKey(jsonData, key);
     }
-
     return "";
 }
 
@@ -85,7 +88,6 @@ void fetchOffsets() {
     std::vector<std::string> keysToFindOffsets = {
         "dwEntityList"
     };
-
     std::vector<std::string> keysToFindClientDLL = {
         "m_flDetectedByEnemySensorTime",
         "m_hPlayerPawn"
@@ -105,14 +107,17 @@ void fetchOffsets() {
             std::cerr << COLOR_RED << "Key '" << key << "' (Offsets) not found in the JSON data." << std::endl;
         }
     }
-
     for (const auto& key : keysToFindClientDLL) {
         std::string value = fetchValueFromJSON(urlClientDLL, key);
         if (!value.empty()) {
-             ptrdiff_t hexValue = std::stoll(value, 0, 0);
+            long long hexValue = std::stoll(value, 0, 0);
             std::cout << COLOR_GREEN << key << " (ClientDLL): " << COLOR_YELLOW << "0x" << std::uppercase << std::hex << hexValue << std::nouppercase << std::dec << std::endl;
 
-            if (key == "m_flDetectedByEnemySensorTime") {
+            // Handle the specific key-value assignments here
+            if (key == "dwEntityList") {
+                offsets::p_entity_list = hexValue;
+            }
+            else if (key == "m_flDetectedByEnemySensorTime") {
                 offsets::m_fl_detected_by_enemy_sensor_time = hexValue;
             }
             else if (key == "m_hPlayerPawn") {
@@ -137,7 +142,6 @@ uint32_t get_process_id_by_name(const char* process_name)
     BOOL hRes = Process32First(hSnapShot, &pEntry);
     while (hRes)
     {
-        // Convert the narrow process_name to a wide string
         wchar_t wideProcessName[MAX_PATH];
         MultiByteToWideChar(CP_ACP, 0, process_name, -1, wideProcessName, MAX_PATH);
 
@@ -234,58 +238,41 @@ int main(int argc, char* argv[])
     printf("%sFetching offsets...%s\n", COLOR_GREEN, COLOR_RESET);
     fetchOffsets();
     printf("%sCS2-Glow Made by: github/9xN - Press F1 to enable/disable%s\n", COLOR_BLUE, COLOR_RESET);
-
     while (true)
     {
         static bool glow_enabled = false;
-
         if (GetAsyncKeyState(VK_F1))
         {
             glow_enabled = !glow_enabled;
             std::this_thread::sleep_for(std::chrono::milliseconds(150));
             printf("status enabled: %s%s%s\n", glow_enabled ? COLOR_GREEN : COLOR_RED, glow_enabled ? "true" : "false", COLOR_RESET);
         }
-
         for (int i = 1; i < 64; i++)
         {
             uintptr_t entity_list = memory_read<uintptr_t>(cs2_process_handle, cs2_module_client + offsets::p_entity_list);
-
             if (entity_list == 0)
                 continue;
-
             uintptr_t list_entry = memory_read<uintptr_t>(cs2_process_handle, entity_list + (8 * (i & 0x7FFF) >> 9) + 16);
-
             if (list_entry == 0)
                 continue;
-
             uintptr_t player = memory_read<uintptr_t>(cs2_process_handle, list_entry + 120 * (i & 0x1FF));
-
             if (player == 0)
                 continue;
-
             uint32_t player_pawn = memory_read<uint32_t>(cs2_process_handle, player + offsets::m_h_player_pawn);
-
             uintptr_t list_entry2 = memory_read<uintptr_t>(cs2_process_handle, entity_list + 0x8 * ((player_pawn & 0x7FFF) >> 9) + 16);
-
             if (list_entry2 == 0)
                 continue;
-
             uintptr_t p_cs_player_pawn = memory_read<uintptr_t>(cs2_process_handle, list_entry2 + 120 * (player_pawn & 0x1FF));
-
             if (p_cs_player_pawn == 0)
                 continue;
-
             if (!glow_enabled)
                 memory_write<float>(cs2_process_handle, p_cs_player_pawn + offsets::m_fl_detected_by_enemy_sensor_time, 0.f); // off
             else
                 memory_write<float>(cs2_process_handle, p_cs_player_pawn + offsets::m_fl_detected_by_enemy_sensor_time, 100000.f); // on
         }
-
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-
     CloseHandle(cs2_process_handle);
-
-    std::cin.get(); // Wait for user input
+    std::cin.get();
     return 0;
 }
