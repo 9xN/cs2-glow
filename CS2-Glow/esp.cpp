@@ -32,11 +32,22 @@ const char* COLOR_BLUE = "\033[34m";
 const char* COLOR_RESET = "\033[0m";
 
 std::string findValueByKey(const std::string& json, const std::string& key) {
-    std::regex keyRegex("\"" + key + "\":\\s*\\{\\s*\"value\":\\s*(\\d+)");
+    std::regex keyRegex("\"" + key + "\":\\s*(?:\\{[^{}]*\\}|\\d+)");
     std::smatch match;
 
     if (std::regex_search(json, match, keyRegex)) {
-        return match[1].str();
+        std::string value = match[0].str();
+        if (value.find('{') != std::string::npos) {
+            std::regex valueRegex(":\\s*(\\d+)");
+            std::smatch valueMatch;
+            if (std::regex_search(value, valueMatch, valueRegex)) {
+                return valueMatch[1].str();
+            }
+        }
+        else {
+            size_t pos = value.find(':');
+            return value.substr(pos + 1);
+        }
     }
 
     return "";
@@ -82,8 +93,8 @@ std::string fetchValueFromJSON(const std::wstring& url, const std::string& key) 
 }
 
 void fetchOffsets() {
-    const std::wstring urlOffsets = L"https://raw.githubusercontent.com/a2x/cs2-dumper/main/output/win/offsets.json";
-    const std::wstring urlClientDLL = L"https://raw.githubusercontent.com/a2x/cs2-dumper/main/output/win/client.dll.json";
+    const std::wstring urlOffsets = L"https://raw.githubusercontent.com/a2x/cs2-dumper/main/output/offsets.json";
+    const std::wstring urlClientDLL = L"https://raw.githubusercontent.com/a2x/cs2-dumper/main/output/client.dll.json";
 
     std::vector<std::string> keysToFindOffsets = {
         "dwEntityList"
@@ -96,9 +107,8 @@ void fetchOffsets() {
     for (const auto& key : keysToFindOffsets) {
         std::string value = fetchValueFromJSON(urlOffsets, key);
         if (!value.empty()) {
-             ptrdiff_t hexValue = std::stoll(value, 0, 0);
+            ptrdiff_t hexValue = std::stoll(value, 0, 0);
             std::cout << COLOR_GREEN << key << " (Offsets): " << COLOR_YELLOW << "0x" << std::uppercase << std::hex << hexValue << std::nouppercase << std::dec << std::endl;
-
             if (key == "dwEntityList") {
                 offsets::p_entity_list = hexValue;
             }
@@ -112,12 +122,8 @@ void fetchOffsets() {
         if (!value.empty()) {
             long long hexValue = std::stoll(value, 0, 0);
             std::cout << COLOR_GREEN << key << " (ClientDLL): " << COLOR_YELLOW << "0x" << std::uppercase << std::hex << hexValue << std::nouppercase << std::dec << std::endl;
-
             // Handle the specific key-value assignments here
-            if (key == "dwEntityList") {
-                offsets::p_entity_list = hexValue;
-            }
-            else if (key == "m_flDetectedByEnemySensorTime") {
+            if (key == "m_flDetectedByEnemySensorTime") {
                 offsets::m_fl_detected_by_enemy_sensor_time = hexValue;
             }
             else if (key == "m_hPlayerPawn") {
